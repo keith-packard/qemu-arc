@@ -30,6 +30,7 @@
 #include "qemu/host-utils.h"
 #include "exec/helper-proto.h"
 #include "irq.h"
+#include "semihosting/semihost.h"
 
 void arc_cpu_do_interrupt(CPUState *cs)
 {
@@ -57,6 +58,20 @@ void arc_cpu_do_interrupt(CPUState *cs)
 
     qemu_log_mask(CPU_LOG_INT, "[EXCP] Entering with AE: " TARGET_FMT_ld "\n",
                   GET_STATUS_BIT(env->stat, AEf));
+
+    /*
+     * NOTE: Special handling of the SWI exception when having
+     * semihosting enabled.
+     */
+    if (cs->exception_index == EXCP_SWI
+        && semihosting_enabled()){
+        qemu_log_mask(CPU_LOG_INT, "Entering semihosting\n");
+        do_arc_semihosting(env);
+        /* Return to the next instruction. */
+        env->pc = env->erbta;
+        CPU_PCL(env) = env->pc & 0xfffffffe;
+        return;
+    }
 
     /* If we take an exception within an exception => fatal Machine Check. */
     if (GET_STATUS_BIT(env->stat, AEf) == 1) {
