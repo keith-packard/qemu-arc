@@ -509,8 +509,6 @@ bool arc_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
         || GET_STATUS_BIT(env->stat, IEf) == 0
         /* We are not in an exception. */
         || GET_STATUS_BIT(env->stat, AEf)
-        /* Disable interrupts to happen after MissI exceptions. */
-        || env->enabled_interrupts == false
         /* In a delay slot of branch */
         || env->in_delayslot_instruction
         || GET_STATUS_BIT(env->stat, DEf)

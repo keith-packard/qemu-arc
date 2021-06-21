@@ -290,7 +290,6 @@ typedef struct CPUARCState {
 
     const struct arc_boot_info *boot_info;
 
-    bool enabled_interrupts;
     bool in_delayslot_instruction;
     bool next_insn_is_delayslot;
 

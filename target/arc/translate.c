@@ -1516,8 +1516,6 @@ void decode_opc(CPUARCState *env, DisasContext *ctx)
 {
     ctx->env = env;
 
-    env->enabled_interrupts = false;
-
     const struct arc_opcode *opcode = NULL;
     if (!read_and_decode_context(ctx, &opcode)) {
         ctx->base.is_jmp = arc_gen_INVALID(ctx);
@@ -1556,8 +1554,6 @@ void decode_opc(CPUARCState *env, DisasContext *ctx)
     TCGv npc = tcg_const_local_tl(ctx->npc);
     gen_helper_zol_verify(cpu_env, npc);
     tcg_temp_free(npc);
-
-    env->enabled_interrupts = true;
 }
 
 static void arc_tr_translate_insn(DisasContextBase *dcbase, CPUState *cpu)
