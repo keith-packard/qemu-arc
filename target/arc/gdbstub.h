@@ -147,7 +147,9 @@ enum gdb_aux_other_regs {
     GDB_AUX_OTHER_REG_IRQ_TRIGGER,      /* trigger                */
     GDB_AUX_OTHER_REG_IRQ_STATUS,       /* status                 */
     GDB_AUX_OTHER_REG_IRQ_PULSE,        /* pulse cancel           */
+#ifdef TARGET_ARCV2
     GDB_AUX_OTHER_REG_IRQ_PENDING,      /* pending                */
+#endif
     GDB_AUX_OTHER_REG_IRQ_PRIO,         /* priority               */
     /* miscellaneous */
     GDB_AUX_OTHER_REG_BTA,              /* branch target address */

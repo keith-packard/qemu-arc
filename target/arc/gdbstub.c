@@ -160,9 +160,11 @@ arc_aux_other_gdb_get_reg(CPUARCState *env, GByteArray *mem_buf, int regnum)
     case GDB_AUX_OTHER_REG_IRQ_BUILD:
         regval = helper_lr(env, REG_ADDR(AUX_ID_irq_build, cpu->family));
         break;
+#ifdef TARGET_ARCV2
     case GDB_AUX_OTHER_REG_MPY_BUILD:
         regval = helper_lr(env, REG_ADDR(AUX_ID_mpy_build, cpu->family));
         break;
+#endif
     case GDB_AUX_OTHER_REG_VECBASE_BUILD:
         regval = cpu->vecbase_build;
         break;
@@ -187,6 +189,8 @@ arc_aux_other_gdb_get_reg(CPUARCState *env, GByteArray *mem_buf, int regnum)
     case GDB_AUX_OTHER_REG_TIMER_LIM1:
         regval = helper_lr(env, REG_ADDR(AUX_ID_limit1, cpu->family));
         break;
+#ifdef TARGET_ARCV2
+    /* MMUv4 */
     case GDB_AUX_OTHER_REG_PID:
         regval = helper_lr(env, REG_ADDR(AUX_ID_pid, cpu->family));
         break;
@@ -202,6 +206,8 @@ arc_aux_other_gdb_get_reg(CPUARCState *env, GByteArray *mem_buf, int regnum)
     case GDB_AUX_OTHER_REG_TLB_CMD:
         regval = helper_lr(env, REG_ADDR(AUX_ID_tlbcommand, cpu->family));
         break;
+#endif
+#ifdef TARGET_ARCV2
     /* MPU */
     case GDB_AUX_OTHER_REG_MPU_BUILD:
         regval = helper_lr(env, REG_ADDR(AUX_ID_mpu_build, cpu->family));
@@ -222,6 +228,7 @@ arc_aux_other_gdb_get_reg(CPUARCState *env, GByteArray *mem_buf, int regnum)
         regval = helper_lr(env, REG_ADDR(AUX_ID_mpurdp0 + index, cpu->family));
         break;
     }
+#endif
     /* exceptions */
     case GDB_AUX_OTHER_REG_ERSTATUS:
         regval = helper_lr(env, REG_ADDR(AUX_ID_erstatus, cpu->family));
@@ -269,9 +276,11 @@ arc_aux_other_gdb_get_reg(CPUARCState *env, GByteArray *mem_buf, int regnum)
     case GDB_AUX_OTHER_REG_IRQ_PULSE:
         regval = 0; /* write only for clearing the pulse triggered interrupt */
         break;
+#ifdef TARGET_ARCV2
     case GDB_AUX_OTHER_REG_IRQ_PENDING:
         regval = helper_lr(env, REG_ADDR(AUX_ID_irq_pending, cpu->family));
         break;
+#endif
     case GDB_AUX_OTHER_REG_IRQ_PRIO:
         regval = helper_lr(env, REG_ADDR(AUX_ID_irq_priority, cpu->family));
         break;
@@ -305,15 +314,17 @@ arc_aux_other_gdb_set_reg(CPUARCState *env, uint8_t *mem_buf, int regnum)
     switch (regnum) {
     case GDB_AUX_OTHER_REG_TIMER_BUILD:
     case GDB_AUX_OTHER_REG_IRQ_BUILD:
+#ifdef TARGET_ARCV2
     case GDB_AUX_OTHER_REG_MPY_BUILD:
-    case GDB_AUX_OTHER_REG_VECBASE_BUILD:
-    case GDB_AUX_OTHER_REG_ISA_CONFIG:
     case GDB_AUX_OTHER_REG_MPU_BUILD:
     case GDB_AUX_OTHER_REG_MPU_ECR:
+    case GDB_AUX_OTHER_REG_IRQ_PENDING:
+#endif
+    case GDB_AUX_OTHER_REG_VECBASE_BUILD:
+    case GDB_AUX_OTHER_REG_ISA_CONFIG:
     case GDB_AUX_OTHER_REG_ICAUSE:
     case GDB_AUX_OTHER_REG_IRQ_PRIO_PEND:
     case GDB_AUX_OTHER_REG_IRQ_STATUS:
-    case GDB_AUX_OTHER_REG_IRQ_PENDING:
         /* builds/configs/exceptions/irqs cannot be changed */
         break;
     case GDB_AUX_OTHER_REG_TIMER_CNT0:
@@ -334,6 +345,8 @@ arc_aux_other_gdb_set_reg(CPUARCState *env, uint8_t *mem_buf, int regnum)
     case GDB_AUX_OTHER_REG_TIMER_LIM1:
         helper_sr(env, regval, REG_ADDR(AUX_ID_limit1, cpu->family));
         break;
+#ifdef TARGET_ARCV2
+    /* MMUv4 */
     case GDB_AUX_OTHER_REG_PID:
         helper_sr(env, regval, REG_ADDR(AUX_ID_pid, cpu->family));
         break;
@@ -349,6 +362,8 @@ arc_aux_other_gdb_set_reg(CPUARCState *env, uint8_t *mem_buf, int regnum)
     case GDB_AUX_OTHER_REG_TLB_CMD:
         helper_sr(env, regval, REG_ADDR(AUX_ID_tlbcommand, cpu->family));
         break;
+#endif
+#ifdef TARGET_ARCV2
     /* MPU */
     case GDB_AUX_OTHER_REG_MPU_EN:
         helper_sr(env, regval, REG_ADDR(AUX_ID_mpuen, cpu->family));
@@ -363,6 +378,7 @@ arc_aux_other_gdb_set_reg(CPUARCState *env, uint8_t *mem_buf, int regnum)
         helper_sr(env, regval, REG_ADDR(AUX_ID_mpurdp0 + index, cpu->family));
         break;
     }
+#endif
     /* exceptions */
     case GDB_AUX_OTHER_REG_ERSTATUS:
         helper_sr(env, regval, REG_ADDR(AUX_ID_erstatus, cpu->family));
