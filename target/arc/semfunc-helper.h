@@ -122,6 +122,12 @@ void arc_gen_set_debug(const DisasCtxt *ctx, bool value);
 #ifdef TARGET_ARCV3
 #define setNFlag32(ELEM)  tcg_gen_shri_tl(cpu_Nf, ELEM, 31)
 #endif
+#define setNFlagByNum(ELEM, N) { \
+    TCGv _tmp = tcg_temp_local_new(); \
+    tcg_gen_shri_tl(_tmp, ELEM, (N - 1)); \
+    tcg_gen_andi_tl(cpu_Nf, _tmp, 1); \
+    tcg_temp_free(_tmp); \
+}
 
 #define setCFlag(ELEM)  tcg_gen_andi_tl(cpu_Cf, ELEM, 1)
 #define getCFlag(R)     tcg_gen_mov_tl(R, cpu_Cf)
@@ -130,6 +136,12 @@ void arc_gen_set_debug(const DisasCtxt *ctx, bool value);
 
 #define setZFlag(ELEM)  \
     tcg_gen_setcondi_tl(TCG_COND_EQ, cpu_Zf, ELEM, 0);
+#define setZFlagByNum(ELEM, N) { \
+    TCGv _tmp = tcg_temp_local_new(); \
+    tcg_gen_andi_tl(_tmp, cpu_Zf, (1 << N) - 1); \
+    tcg_gen_setcondi_tl(TCG_COND_EQ, _tmp, ELEM, 0); \
+    tcg_temp_free(_tmp); \
+}
 
 #define nextInsnAddressAfterDelaySlot(R) \
   { \
