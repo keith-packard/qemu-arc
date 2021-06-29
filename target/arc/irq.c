@@ -210,7 +210,6 @@ static void arc_enter_firq(ARCCPU *cpu, uint32_t vector)
 {
     CPUARCState *env = &cpu->env;
 
-    assert(GET_STATUS_BIT(env->stat, DEf) == 0);
     assert(env->in_delayslot_instruction == 0);
 
     /* Reset RTC state machine -> AUX_RTC_CTRL &= 0x3fffffff */
@@ -265,7 +264,6 @@ static void arc_enter_irq(ARCCPU *cpu, uint32_t vector)
 {
     CPUARCState *env = &cpu->env;
 
-    assert(GET_STATUS_BIT(env->stat, DEf) == 0);
     assert(env->in_delayslot_instruction == 0);
 
     /* Reset RTC state machine -> AUX_RTC_CTRL &= 0x3fffffff */
@@ -509,9 +507,6 @@ bool arc_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
         || GET_STATUS_BIT(env->stat, IEf) == 0
         /* We are not in an exception. */
         || GET_STATUS_BIT(env->stat, AEf)
-        /* In a delay slot of branch */
-        || env->in_delayslot_instruction
-        || GET_STATUS_BIT(env->stat, DEf)
         || (!(interrupt_request & CPU_INTERRUPT_HARD))) {
         return false;
     }
