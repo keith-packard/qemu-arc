@@ -1751,6 +1751,7 @@ void decode_opc(CPUARCState *env, DisasContext *ctx)
 
         tcg_temp_free(temp_DEf);
         env->in_delayslot_instruction = false;
+        ctx->base.is_jmp = DISAS_NORETURN;
     }
 
     TCGv npc = tcg_const_local_tl(ctx->npc);
