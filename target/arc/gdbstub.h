@@ -156,7 +156,7 @@ enum gdb_aux_regs {
 
 #define GDB_TARGET_STRING "arc64:64"
 
-/* The order here is strictly tied with gdb-xml/arc-v3_64-core.xml. */
+/* The order here is strictly tied with gdb-xml/arc-v3_{32,64}-core.xml. */
 enum gdb_regs {
     GDB_REG_0 = 0,
     GDB_REG_1,
@@ -196,7 +196,7 @@ enum gdb_regs {
     GDB_REG_LAST
 };
 
-/* The order here is strictly tied with gdb-xml/arc-v3_64-aux.xml. */
+/* The order here is strictly tied with gdb-xml/arc-v3_{32,64}-aux.xml. */
 enum gdb_aux_regs {
     GDB_AUX_REG_PC = 0,        /* program counter */
     GDB_AUX_REG_STATUS,        /* status flag     */
