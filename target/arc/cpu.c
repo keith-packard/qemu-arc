@@ -332,16 +332,6 @@ static void arc_cpu_realizefn(DeviceState *dev, Error **errp)
     arcc->parent_realize(dev, errp);
 }
 
-static void arc_cpu_initfn(Object *obj)
-{
-    ARCCPU *cpu = ARC_CPU(obj);
-
-    /* Initialize aux-regs. */
-    arc_aux_regs_init();
-
-    cpu_set_cpustate_pointers(cpu);
-}
-
 static ObjectClass *arc_cpu_class_by_name(const char *cpu_model)
 {
     ObjectClass *oc;
@@ -366,6 +356,16 @@ static ObjectClass *arc_cpu_class_by_name(const char *cpu_model)
     }
 
     return oc;
+}
+
+static void arc_cpu_init(Object *obj)
+{
+    ARCCPU *cpu = ARC_CPU(obj);
+
+    /* Initialize aux-regs. */
+    arc_aux_regs_init();
+
+    cpu_set_cpustate_pointers(cpu);
 }
 
 static gchar *arc_gdb_arch_name(CPUState *cs)
@@ -409,31 +409,47 @@ static void arc_cpu_class_init(ObjectClass *oc, void *data)
     cc->has_work = arc_cpu_has_work;
     cc->dump_state = arc_cpu_dump_state;
     cc->set_pc = arc_cpu_set_pc;
+    cc->disas_set_info = arc_cpu_disas_set_info;
+    cc->gdb_arch_name = arc_gdb_arch_name;
+    cc->tcg_ops = &arc_tcg_ops;
+
 #ifndef CONFIG_USER_ONLY
     cc->memory_rw_debug = arc_cpu_memory_rw_debug;
     cc->get_phys_page_debug = arc_cpu_get_phys_page_debug;
     cc->vmsd = &vms_arc_cpu;
 #endif
-    cc->disas_set_info = arc_cpu_disas_set_info;
-
-    /* Core GDB support */
-#ifdef TARGET_ARCV2
-    cc->gdb_core_xml_file = GDB_ARCV2_CORE_XML;
-    cc->gdb_num_core_regs = GDB_ARCV2_CORE_LAST;
-    cc->gdb_read_register = gdb_v2_core_read;
-    cc->gdb_write_register = gdb_v2_core_write;
-#else
-    /* these can be still overwritten by hs5x. */
-    cc->gdb_core_xml_file = GDB_ARCV3_64_CORE_XML;
-    cc->gdb_num_core_regs = GDB_ARCV3_CORE_LAST;
-    cc->gdb_read_register = gdb_v3_core_read;
-    cc->gdb_write_register = gdb_v3_core_write;
-#endif
-    cc->gdb_arch_name = arc_gdb_arch_name;
-
-    cc->tcg_ops = &arc_tcg_ops;
 
     device_class_set_props(dc, arc_cpu_properties);
+}
+
+static void arc_v2_cpu_class_init(ObjectClass *oc, void *data)
+{
+    CPUClass *cc = CPU_CLASS(oc);
+
+    cc->gdb_core_xml_file  = GDB_ARCV2_CORE_XML;
+    cc->gdb_num_core_regs  = GDB_ARCV2_CORE_LAST;
+    cc->gdb_read_register  = gdb_v2_core_read;
+    cc->gdb_write_register = gdb_v2_core_write;
+}
+
+static void arc_v3_hs5_cpu_class_init(ObjectClass *oc, void *data)
+{
+    CPUClass *cc = CPU_CLASS(oc);
+
+    cc->gdb_core_xml_file  = GDB_ARCV3_32_CORE_XML;
+    cc->gdb_num_core_regs  = GDB_ARCV3_CORE_LAST;
+    cc->gdb_read_register  = gdb_v3_core_read;
+    cc->gdb_write_register = gdb_v3_core_write;
+}
+
+static void arc_v3_hs6_cpu_class_init(ObjectClass *oc, void *data)
+{
+    CPUClass *cc = CPU_CLASS(oc);
+
+    cc->gdb_core_xml_file  = GDB_ARCV3_64_CORE_XML;
+    cc->gdb_num_core_regs  = GDB_ARCV3_CORE_LAST;
+    cc->gdb_read_register  = gdb_v3_core_read;
+    cc->gdb_write_register = gdb_v3_core_write;
 }
 
 static void arc_any_initfn(Object *obj)
@@ -443,7 +459,6 @@ static void arc_any_initfn(Object *obj)
     cpu->family = ARC_OPCODE_ARC700;
 }
 
-#ifdef TARGET_ARCV2
 static void arc600_initfn(Object *obj)
 {
     ARCCPU *cpu = ARC_CPU(obj);
@@ -479,69 +494,64 @@ static void arc_hs5x_initfn(Object *obj)
     cc->gdb_read_register = gdb_v3_core_read;
     cc->gdb_write_register = gdb_v3_core_write;
 }
-#endif
 
-#ifdef TARGET_ARCV3
 static void arc_hs6x_initfn(Object *obj)
 {
     ARCCPU *cpu = ARC_CPU(obj);
     cpu->family = ARC_OPCODE_V3_ARC64;
-}
-#endif
-
-typedef struct ARCCPUInfo {
-    const char     *name;
-    void (*initfn)(Object *obj);
-} ARCCPUInfo;
-
-static const ARCCPUInfo arc_cpus[] = {
-#ifdef TARGET_ARCV2
-    { .name = "arc600", .initfn = arc600_initfn },
-    { .name = "arc700", .initfn = arc700_initfn },
-    { .name = "arcem", .initfn = arcem_initfn },
-    { .name = "archs", .initfn = archs_initfn },
-#endif
-#ifdef TARGET_ARCV3
-    { .name = "hs6x", .initfn = arc_hs6x_initfn },
-#endif
-    { .name = "any", .initfn = arc_any_initfn },
-};
-
-static void cpu_register(const ARCCPUInfo *info)
-{
-    TypeInfo type_info = {
-        .parent = TYPE_ARC_CPU,
-        .instance_size = sizeof(ARCCPU),
-        .instance_init = info->initfn,
-        .class_size = sizeof(ARCCPUClass),
-    };
-
-    type_info.name = g_strdup_printf("%s-" TYPE_ARC_CPU, info->name);
-    type_register(&type_info);
-    g_free((void *)type_info.name);
+    CPUClass *cc = &ARC_CPU_GET_CLASS(obj)->parent_class;
+    cc->gdb_core_xml_file = GDB_ARCV3_64_CORE_XML;
+    cc->gdb_arch_name = arc_gdb_arch_name;
+    cc->gdb_num_core_regs = GDB_ARCV3_CORE_LAST;
+    cc->gdb_read_register = gdb_v3_core_read;
+    cc->gdb_write_register = gdb_v3_core_write;
 }
 
-static const TypeInfo arc_cpu_type_info = {
-    .name = TYPE_ARC_CPU,
-    .parent = TYPE_CPU,
-    .instance_size = sizeof(ARCCPU),
-    .instance_init = arc_cpu_initfn,
-    .class_size = sizeof(ARCCPUClass),
-    .class_init = arc_cpu_class_init,
-    .abstract = true,
-};
-
-static void arc_cpu_register_types(void)
-{
-    int i;
-    type_register_static(&arc_cpu_type_info);
-
-    for (i = 0; i < ARRAY_SIZE(arc_cpus); i++) {
-        cpu_register(&arc_cpus[i]);
+#define DEFINE_CPU_V2(type_name, initfn)        \
+    {                                           \
+        .name = type_name,                      \
+        .parent = TYPE_ARC_CPU,                 \
+        .instance_init = initfn,                \
+        .class_init = arc_v2_cpu_class_init,    \
     }
-}
 
-type_init(arc_cpu_register_types)
+#define DEFINE_CPU_V3_HS5(type_name, initfn)        \
+    {                                               \
+        .name = type_name,                          \
+        .parent = TYPE_ARC_CPU,                     \
+        .instance_init = initfn,                    \
+        .class_init = arc_v3_hs5_cpu_class_init,    \
+    }
+
+#define DEFINE_CPU_V3_HS6(type_name, initfn)        \
+    {                                               \
+        .name = type_name,                          \
+        .parent = TYPE_ARC_CPU,                     \
+        .instance_init = initfn,                    \
+        .class_init = arc_v3_hs6_cpu_class_init,    \
+    }
+
+static const TypeInfo arc_cpu_type_infos[] = {
+    {
+        .name = TYPE_ARC_CPU,
+        .parent = TYPE_CPU,
+        .instance_size = sizeof(ARCCPU),
+        .instance_align = __alignof__(ARCCPU),
+        .instance_init = arc_cpu_init,
+        .abstract = true,
+        .class_size = sizeof(ARCCPUClass),
+        .class_init = arc_cpu_class_init
+    },
+    DEFINE_CPU_V2(    TYPE_ARC_CPU_ANY,     arc_any_initfn),
+    DEFINE_CPU_V2(    TYPE_ARC_CPU_ARC600,  arc600_initfn),
+    DEFINE_CPU_V2(    TYPE_ARC_CPU_ARC700,  arc700_initfn),
+    DEFINE_CPU_V2(    TYPE_ARC_CPU_ARCEM,   arcem_initfn),
+    DEFINE_CPU_V2(    TYPE_ARC_CPU_ARCHS,   archs_initfn),
+    DEFINE_CPU_V3_HS5(TYPE_ARC_CPU_HS5X,    arc_hs5x_initfn),
+    DEFINE_CPU_V3_HS6(TYPE_ARC_CPU_HS6X,    arc_hs6x_initfn),
+};
+
+DEFINE_TYPES(arc_cpu_type_infos)
 
 /*-*-indent-tabs-mode:nil;tab-width:4;indent-line-function:'insert-tab'-*-*/
 /* vim: set ts=4 sw=4 et: */
