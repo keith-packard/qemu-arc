@@ -172,7 +172,7 @@ arc_mmuv6_aux_get(const struct arc_aux_reg_detail *aux_reg_detail, void *data)
        * Type:    1 (MMUv48)
        * Version: 6 (MMUv6)
        */
-      reg = (6 << 24) | (1 << 21) | (0 << 9) | (0 << 6) | (1 << 3) | 2;
+      reg = (0x10 << 24) | (1 << 21) | (0 << 9) | (0 << 6) | (1 << 3) | 2;
       break;
   case AUX_ID_mmu_rtp0:
       reg = mmu_rtp0;
@@ -692,7 +692,7 @@ bool arc_cpu_tlb_fill(CPUState *cs, vaddr address, int size,
 
 #ifndef CONFIG_USER_ONLY
 hwaddr arc_mmu_debug_translate(CPUARCState *env, vaddr addr)
-{ 
+{
     struct mem_exception excp;
 
     if(mmuv6_enabled()) {
