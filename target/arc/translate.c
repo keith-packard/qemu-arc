@@ -870,11 +870,10 @@ arc_gen_DSYNC(DisasCtxt *ctx)
 int
 arc_gen_HALT(DisasCtxt *ctx)
 {
-    int ret = DISAS_NEXT;
     TCGv npc = tcg_const_local_tl(ctx->cpc);
     gen_helper_halt(cpu_env, npc);
     tcg_temp_free(npc);
-    return ret;
+    return DISAS_NORETURN;
 }
 
 #ifdef TARGET_ARC64
@@ -1252,7 +1251,7 @@ arc_gen_SWI(DisasCtxt *ctx, TCGv a)
 
     tcg_temp_free(tcg_index);
     tcg_temp_free(tcg_cause);
-    return DISAS_NEXT;
+    return DISAS_NORETURN;
 }
 int
 arc_gen_TRAP(DisasCtxt *ctx, TCGv a)
@@ -1379,7 +1378,7 @@ arc_gen_SLEEP(DisasCtxt *ctx, TCGv a)
 {
     /* FIXME: Add check for kernel mode. */
     arc_gen_sleep(ctx, a);
-    return DISAS_NEXT;
+    return DISAS_NORETURN;
 }
 
 /*
@@ -1405,7 +1404,7 @@ arc_gen_WEVT(DisasCtxt *ctx, TCGv c)
 
     arc_gen_sleep(ctx, c);
 
-    return DISAS_NEXT;
+    return DISAS_NORETURN;
 }
 
 /*
@@ -1447,7 +1446,7 @@ arc_gen_WLFC(DisasCtxt *ctx, TCGv c)
     gen_set_label(dont_stop);
     tcg_temp_free(lf_set);
 
-    return DISAS_NEXT;
+    return DISAS_NORETURN;
 }
 
 /* Given a CTX, generate the relevant TCG code for the given opcode. */
