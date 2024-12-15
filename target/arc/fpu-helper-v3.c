@@ -173,12 +173,34 @@ CONVERSION_HELPERS(fuint2s, uint32_to_float32)
 CONVERSION_HELPERS(fs2uint, float32_to_uint32)
 CONVERSION_HELPERS(fs2uint_rz, float32_to_uint32_round_to_zero)
 
-CONVERSION_HELPERS(fdrnd, float64_round_to_int)
-CONVERSION_HELPERS(fsrnd, float32_round_to_int)
-
 CONVERSION_HELPERS(fdsqrt, float64_sqrt)
 CONVERSION_HELPERS(fssqrt, float32_sqrt)
 CONVERSION_HELPERS(fhsqrt, float16_sqrt)
+
+/* Soft fpu helper for round_to_int with rounding away mode */
+#define CONVERSION_HELPERS_RA(NAME, FLT_HELPER)                       \
+uint64_t helper_##NAME(CPUARCState *env, uint64_t src)                \
+{                                                                     \
+    FloatRoundMode saved_rounding_mode;                               \
+    bool saved_flush_zero;                                            \
+                                                                      \
+    saved_flush_zero = get_flush_to_zero(&env->fp_status);            \
+    saved_rounding_mode = get_float_rounding_mode(&env->fp_status);   \
+                                                                      \
+    set_flush_to_zero(true, &env->fp_status);                         \
+    set_float_rounding_mode(float_round_ties_away, &env->fp_status);  \
+                                                                      \
+    uint64_t ret = FLT_HELPER(src, &env->fp_status);                  \
+                                                                      \
+    set_flush_to_zero(saved_flush_zero, &env->fp_status);             \
+    set_float_rounding_mode(saved_rounding_mode, &env->fp_status);    \
+                                                                      \
+    check_fpu_raise_exception(env);                                   \
+    return ret;                                                       \
+}
+
+CONVERSION_HELPERS_RA(fdrnd, float64_round_to_int)
+CONVERSION_HELPERS_RA(fsrnd, float32_round_to_int)
 
 /* Soft fpu helper for round_to_int with rounding to zero mode */
 #define CONVERSION_HELPERS_RZ(NAME, FLT_HELPER)                       \
